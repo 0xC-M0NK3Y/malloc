@@ -1,6 +1,9 @@
 #ifndef DEFINES_H__
 # define DEFINES_H__
 
+#include <stdint.h>
+#include <stddef.h>
+
 #define TINY_SIZE   32
 #define SMALL_SIZE  1024
 

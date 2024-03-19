@@ -2,6 +2,7 @@
 # define STRUCTS_H__
 
 #include <stdint.h>
+#include <stddef.h>
 
 #include "defines.h"
 
@@ -46,6 +47,7 @@ typedef struct malloc_data {
     heap_t       small;
     large_heap_t large;
     int          pagesize;
+    int          ready;
 } malloc_data_t;
 
 #endif /* structs.h */

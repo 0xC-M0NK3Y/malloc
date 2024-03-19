@@ -47,6 +47,7 @@ clean:
 		rm -rf ./build/*
 fclean: clean
 		rm -rf ./lib/*
+		rm -rf ./bin/*
 
 re : fclean all
 

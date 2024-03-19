@@ -1,10 +1,12 @@
 #ifndef HEAP_H__
 # define HEAP_H__
 
+#include <string.h>
 #include <stdint.h>
+#include <stddef.h>
 
 #include "structs.h"
-#include "utils.h"
+#include "heap_utils.h"
 
 static inline void *heap_alloc(heap_t *heap, size_t size, size_t zone_size, int page_size) {
     void *ret = NULL;
@@ -12,8 +14,8 @@ static inline void *heap_alloc(heap_t *heap, size_t size, size_t zone_size, int 
     // si on a un emplacement dispo
     if (heap->free_space != 0) {
         // on met les metadonnées
-        ((size_t *)heap->free_space)[0] = size;
-        ret = (void *)(&((size_t *)heap->free_space)[1]);
+        ((uintptr_t *)heap->free_space)[0] = size;
+        ret = (void *)(&((uintptr_t *)heap->free_space)[1]);
         // Si le free space est dans le block de base
         if (heap->more_index == (size_t)-1) {
             heap->base.alloc_nb++;
@@ -46,18 +48,18 @@ static inline void *heap_alloc(heap_t *heap, size_t size, size_t zone_size, int 
 static inline void heap_free(heap_t *heap, void *ptr, size_t zone_size, int page_size) {
     // si le pointeur vient de la zone de base
     if (heap->base.heap <= (uintptr_t)ptr && (uintptr_t)ptr < heap->base.heap_end) {
-        ((size_t *)ptr)[-1] = 0;
+        ((uintptr_t *)ptr)[-1] = 0;
         heap->base.alloc_nb--;
         // si le free space actuel est dans la zone de base
         if (heap->base.heap <= heap->free_space && heap->free_space < heap->base.heap_end) {
             // si le le pointeur actuel libre est a gauche du free_space actuel, on le prends en tant que free_space
-            if ((uintptr_t)(&((size_t *)ptr)[-1]) < heap->free_space) {
-                heap->free_space = (uintptr_t)(&((size_t *)ptr)[-1]);
+            if ((uintptr_t)(&((uintptr_t *)ptr)[-1]) < heap->free_space) {
+                heap->free_space = (uintptr_t)(&((uintptr_t *)ptr)[-1]);
                 heap->more_index = (size_t)-1;
             }
         // sinon le free_space est pas dans la zone de base, on prefere allouer le prochain dans la zone de base
         } else {
-            heap->free_space = (uintptr_t)(&((size_t *)ptr)[-1]);
+            heap->free_space = (uintptr_t)(&((uintptr_t *)ptr)[-1]);
             heap->more_index = (size_t)-1;
         }
     // sinon le pointeur n'est pas dans la zone de base, on le cherche
@@ -65,7 +67,7 @@ static inline void heap_free(heap_t *heap, void *ptr, size_t zone_size, int page
         for (size_t i = 0; i < heap->more_nb; i++) {
             // si on a trouver de quel block more le ptr vient
             if (heap->more[i].heap <=  (uintptr_t)ptr &&  (uintptr_t)ptr < heap->more[i].heap_end) {
-                ((size_t *)ptr)[-1] = 0;
+                ((uintptr_t *)ptr)[-1] = 0;
                 heap->more[i].alloc_nb--;
                 // si le free space actuel est pas dans ce block et que y'a plus d'allocation dedans
                 // on le libere
@@ -77,8 +79,8 @@ static inline void heap_free(heap_t *heap, void *ptr, size_t zone_size, int page
                     }
                 // sinon si le free_space est dans le block actuel, on prefere prendre un free_space a gauche
                 } else if (heap->more_index == i) {
-                    if ((uintptr_t)(&((size_t *)ptr)[-1]) < heap->free_space)
-                        heap->free_space = (uintptr_t)(&((size_t *)ptr)[-1]);
+                    if ((uintptr_t)(&((uintptr_t *)ptr)[-1]) < heap->free_space)
+                        heap->free_space = (uintptr_t)(&((uintptr_t *)ptr)[-1]);
                 }
                 break;
             }
@@ -87,3 +89,4 @@ static inline void heap_free(heap_t *heap, void *ptr, size_t zone_size, int page
 }
 
 #endif /* heap.h */
+

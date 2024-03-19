@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
+#include "defines.h"
 #include "structs.h"
 
 extern malloc_data_t malloc_data;
@@ -26,8 +27,9 @@ int init_ft_malloc(void) {
                -1, 0);
     if (tmp == MAP_FAILED)
         return -1;
+    
     inline_zeromem(tmp, total_size);
-
+    
     malloc_data.tiny.base.alloc_cap  = tiny_size/(TINY_SIZE+sizeof(size_t));
     malloc_data.tiny.base.heap       = (uintptr_t)tmp;
     malloc_data.tiny.base.heap_end   = malloc_data.tiny.base.heap + malloc_data.tiny.base.alloc_cap*(TINY_SIZE+sizeof(size_t));
@@ -46,6 +48,9 @@ int init_ft_malloc(void) {
     malloc_data.large.base.alloc_cap = ZONE_NUMBER;
     malloc_data.large.free_space     = &malloc_data.large.base.info[0];
     malloc_data.large.more_index     = (size_t)-1;
+
+    malloc_data.ready = 1;
     
     return 0;
 }
+

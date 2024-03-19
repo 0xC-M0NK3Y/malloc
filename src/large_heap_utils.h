@@ -2,6 +2,9 @@
 # define LARGE_UTILS_H__
 
 #include <stdint.h>
+#include <stddef.h>
+
+#include <sys/mman.h>
 
 #include "structs.h"
 
@@ -37,9 +40,9 @@ static inline void large_alloc_more_block_info(large_heap_t *heap, int page_size
                                -1, 0);
         if (tmp == MAP_FAILED)
             return;
-        inline_zeromem(tmp, tmp_size);
+        inline_zeromem((uint8_t *)tmp, tmp_size);
         
-        heap->more       = tmp;
+        heap->more       = (large_heap_block_t *)tmp;
         heap->more_nb    = tmp_size/sizeof(*heap->more);
         
         for (size_t i = 0; i < heap->more_nb; i++)
@@ -55,11 +58,11 @@ static inline void large_alloc_more_block_info(large_heap_t *heap, int page_size
                                -1, 0);
         if (tmp == MAP_FAILED)
             return;
-        inline_zeromem(tmp, tmp_size);
-        inline_memcpy(tmp, (uint8_t *)heap->more, heap->more_nb*sizeof(*heap->more));
+        inline_zeromem((uint8_t *)tmp, tmp_size);
+        inline_memcpy((uint8_t *)tmp, (uint8_t *)heap->more, heap->more_nb*sizeof(*heap->more));
         munmap(heap->more, ALIGN_TO_PAGE_SIZE(heap->more_nb*sizeof(*heap->more), page_size));
         size_t tmp_nb = heap->more_nb;
-        heap->more    = tmp;
+        heap->more    = (large_heap_block_t *)tmp;
         heap->more_nb = tmp_size/sizeof(*heap->more);
 
         for (size_t i = tmp_nb; i < heap->more_nb; i++)

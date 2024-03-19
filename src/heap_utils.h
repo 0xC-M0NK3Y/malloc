@@ -11,12 +11,12 @@
 static inline uintptr_t find_free_space_in_block(heap_block_t *block, uintptr_t free_space, size_t zone_size) {
     // on cherche vers la droite
     for (uintptr_t p = free_space; p < block->heap_end; p += zone_size+sizeof(size_t)) {
-        if (*(size_t *)p == 0)
+        if (*(uintptr_t *)p == 0)
             return p;
     }
     // sinon on reprends à gauche
     for (uintptr_t p = block->heap; p < free_space; p += zone_size+sizeof(size_t)) {
-        if (*(size_t *)p == 0)
+        if (*(uintptr_t *)p == 0)
             return p;
     }
     return 0;
@@ -47,7 +47,7 @@ static inline int init_heap_block(heap_block_t *block, size_t zone_size, int pag
                -1, 0);
     if (tmp == MAP_FAILED)
         return -1;
-    inline_zeromem(tmp, tmp_size);
+    inline_zeromem((uint8_t *)tmp, tmp_size);
 
     block->alloc_cap = tmp_size/(zone_size+sizeof(size_t));
     block->heap      = (uintptr_t)tmp;
@@ -71,10 +71,10 @@ static inline void alloc_more_block(heap_t *heap, size_t zone_size, int page_siz
                            -1, 0);
         if (tmp == MAP_FAILED)
             return;
-        inline_zeromem(tmp, tmp_size);
+        inline_zeromem((uint8_t *)tmp, tmp_size);
         heap->more_nb  = 0;
         heap->more_cap = tmp_size/sizeof(*heap->more);
-        heap->more     = tmp;
+        heap->more     = (heap_block_t *)tmp;
         // initialiser le premier block
         if (init_heap_block(&heap->more[0], zone_size, page_size) < 0)
             return;
@@ -97,10 +97,10 @@ static inline void alloc_more_block(heap_t *heap, size_t zone_size, int page_siz
                            -1, 0);
         if (tmp == MAP_FAILED)
             return;
-        inline_zeromem(tmp, tmp_size);
-        inline_memcpy(tmp, (uint8_t *)heap->more, heap->more_nb*sizeof(*heap->more));
+        inline_zeromem((uint8_t *)tmp, tmp_size);
+        inline_memcpy((uint8_t *)tmp, (uint8_t *)heap->more, heap->more_nb*sizeof(*heap->more));
         munmap(heap->more, ALIGN_TO_PAGE_SIZE((heap->more_cap*sizeof(*heap->more)), page_size));
-        heap->more     = tmp;
+        heap->more     = (heap_block_t *)tmp;
         heap->more_cap = tmp_size/sizeof(*heap->more);
         // et on initialise le prochain block
         if (init_heap_block(&heap->more[heap->more_nb], zone_size, page_size) < 0)

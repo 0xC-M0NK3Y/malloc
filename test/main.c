@@ -6,10 +6,15 @@
 
 int main(int argc, char **argv) {
 
-    void *ptrs[10000] = {0};
+    void *a = _malloc(10);
+    void *b = _malloc(500);
+    void *c = _malloc(5000);
 
-    for (int i = 0; i < 100+1000+100; i++) {
-        ptrs[i] = _malloc(7000);
-    }
+    printf("a = %p\n", a);
+    printf("b = %p\n", b);
+    printf("c = %p\n", c);
     
+    _free(a);
+    _free(b);
+    _free(c);
 }
