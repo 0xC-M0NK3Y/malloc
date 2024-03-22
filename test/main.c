@@ -6,15 +6,29 @@
 
 int main(int argc, char **argv) {
 
-    void *a = _malloc(10);
-    void *b = _malloc(500);
-    void *c = _malloc(5000);
-
-    printf("a = %p\n", a);
-    printf("b = %p\n", b);
-    printf("c = %p\n", c);
+    void *p[1000];
+    int index = 0;
     
-    _free(a);
-    _free(b);
-    _free(c);
+    for (int i = 0; i < 100; i++) {
+        p[index] = malloc(i);
+        if (p[index]) {
+            for (int j = 0; j < i; i++)
+                ((uint8_t *)p[index])[j] = j;
+        }
+        index++;
+    }
+
+    for (int i = 0; i < 100; i++) {
+        p[index] = malloc(10);
+        if (p[index]) {
+            for (int j = 0; j < 10; j++)
+                ((char *)p[index])[j] = 'a';
+        }
+        index++;
+    }
+
+    for (int i = 0; i < index; i++) {
+        free(p[index]);
+    }
+    
 }

@@ -60,7 +60,7 @@ static inline void *large_heap_alloc(large_heap_t *heap, size_t size, int page_s
 }
 
 static inline void large_heap_free(large_heap_t *heap, void *ptr) {
-    // on regarde dans le bloc    k d'info de base
+    // on regarde dans le block d'info de base
     for (size_t i = 0; i < heap->base.alloc_cap; i++) {
         // si on a trouver le ptr
         if ((uintptr_t)ptr == heap->base.info[i].ptr) {
@@ -74,7 +74,7 @@ static inline void large_heap_free(large_heap_t *heap, void *ptr) {
     for (size_t i = 0; i < heap->more_nb; i++) {
         for (size_t j = 0; j < heap->more[i].alloc_cap; j++) {
             if ((uintptr_t)ptr == heap->more[i].info[j].ptr) {
-                munmap(ptr, heap->more[i].info[j].cap);
+                munmap(&((uintptr_t *)ptr)[-1], heap->more[i].info[j].cap);
                 heap->more[i].info[j].ptr = 0;
                 heap->more[i].alloc_nb--;
                 return;
@@ -82,6 +82,48 @@ static inline void large_heap_free(large_heap_t *heap, void *ptr) {
         }
     }
     return;
+}
+
+static inline void *large_heap_realloc(large_heap_t *heap, void *ptr, size_t size, int page_size) {
+    // on regarde dans le block d'info de base
+    for (size_t i = 0; i < heap->base.alloc_cap; i++) {
+        // si on a trouver le ptr
+        if ((uintptr_t)ptr == heap->base.info[i].ptr) {
+            if (size <= heap->base.info[i].cap) {
+                heap->base.info[i].size = size;
+                return ptr;
+            }
+            // on alloue puis on free si on a reussi a allouer
+            void *tmp = large_heap_alloc(heap, size, page_size);
+            if (tmp) {
+                inline_memcpy((uint8_t *)tmp, (uint8_t *)ptr, heap->base.info[i].size);
+                munmap(&((uintptr_t *)ptr)[-1], heap->base.info[i].cap);
+                heap->base.info[i].ptr = 0;
+                heap->base.alloc_nb--;
+            }
+            return tmp;
+        }
+    }
+    // sinon on regarde dans les block d'info more
+    for (size_t i = 0; i < heap->more_nb; i++) {
+        for (size_t j = 0; j < heap->more[i].alloc_cap; j++) {
+            if ((uintptr_t)ptr == heap->more[i].info[j].ptr) {
+                if (size <= heap->more[i].info[j].cap) {
+                    heap->more[i].info[j].size = size;
+                    return ptr;
+                }
+                void *tmp = large_heap_alloc(heap, size, page_size);
+                if (tmp) {
+                    inline_memcpy((uint8_t *)tmp, (uint8_t *)ptr, heap->more[i].info[j].size);
+                    munmap(&((uintptr_t *)ptr)[-1], heap->more[i].info[j].cap);
+                    heap->more[i].info[j].ptr = 0;
+                    heap->more[i].alloc_nb--;
+                }
+                return tmp;
+            }
+        }
+    }
+    return NULL;
 }
 
 #endif /* large_heap.h */

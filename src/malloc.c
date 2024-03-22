@@ -57,3 +57,46 @@ void _free(void *ptr) {
 }
 
 
+void *_realloc(void *ptr, size_t size) {
+
+    void *ret = NULL;
+    
+    if (ptr == NULL)
+        return _malloc(size);
+    if (size == 0 && ptr != NULL)
+        return _free(ptr), NULL;
+    if (((uintptr_t *)ptr)[-1] <= TINY_SIZE) {
+        if (size <= TINY_SIZE) {
+            ((uintptr_t *)ptr)[-1] = size;
+            ret = ptr;
+        } else {
+            ret = _malloc(size);
+            if (ret) {
+                inline_memcpy((uint8_t *)ret, (uint8_t *)ptr, ((uintptr_t *)ptr)[-1]);
+                _free(ptr);
+            }
+        }
+    } else if (((uintptr_t *)ptr)[-1] <= SMALL_SIZE) {
+        if (size <= SMALL_SIZE) {
+            ((uintptr_t *)ptr)[-1] = size;
+            ret = ptr;
+        } else {
+            ret = _malloc(size);
+            if (ret) {
+                inline_memcpy((uint8_t *)ret, (uint8_t *)ptr, ((uintptr_t *)ptr)[-1]);
+                _free(ptr);
+            }
+        }
+    } else {
+        if (size <= SMALL_SIZE) {
+            ret = _malloc(size);
+            if (ret)
+                _free(ptr);
+        } else {
+            ret = large_heap_realloc(&malloc_data.large, ptr, size, malloc_data.pagesize);
+        }
+    }
+    return ret;
+}
+
+
