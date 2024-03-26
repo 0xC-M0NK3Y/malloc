@@ -5,5 +5,5 @@
 
 void *_malloc(size_t size);
 void _free(void *ptr);
-
+int show_alloc_mem();
 #endif /* ft_malloc.h */

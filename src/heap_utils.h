@@ -41,14 +41,15 @@ static inline uintptr_t find_free_space_in_more_blocks(heap_t *heap, size_t zone
 static inline int init_heap_block(heap_block_t *block, size_t zone_size, int page_size) {
     // on initalise le block
     void *tmp;
-    size_t tmp_size = ALIGN_TO_PAGE_SIZE((zone_size+sizeof(size_t))*ZONE_NUMBER, page_size);
+    size_t tmp_size = ALIGN_TO_PAGE_SIZE(
+        (zone_size + sizeof(size_t)) * ZONE_NUMBER, page_size);
     tmp = mmap(NULL, tmp_size,
                PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE,
                -1, 0);
     if (tmp == MAP_FAILED)
         return -1;
     inline_zeromem((uint8_t *)tmp, tmp_size);
-
+    
     block->alloc_cap = tmp_size/(zone_size+sizeof(size_t));
     block->heap      = (uintptr_t)tmp;
     block->heap_end  = block->heap + block->alloc_cap*(zone_size+sizeof(size_t));
@@ -65,7 +66,8 @@ static inline void alloc_more_block(heap_t *heap, size_t zone_size, int page_siz
     // si on a jamais alloue de more block
     if (heap->more == NULL || heap->more_cap == 0) {
         // d'abord allouer la structure de heap_block_t
-        size_t tmp_size = ALIGN_TO_PAGE_SIZE((10*sizeof(*heap->more)), page_size);
+        size_t tmp_size =
+            ALIGN_TO_PAGE_SIZE((10 * sizeof(*heap->more)), page_size);
         void   *tmp = mmap(NULL, tmp_size,
                            PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE,
                            -1, 0);
@@ -91,7 +93,8 @@ static inline void alloc_more_block(heap_t *heap, size_t zone_size, int page_siz
         heap->more_nb++;
     // sinon faut reallouer le nombre de more block disponible
     } else {
-        size_t tmp_size = ALIGN_TO_PAGE_SIZE(((heap->more_cap+10)*sizeof(*heap->more)), page_size);
+        size_t tmp_size = ALIGN_TO_PAGE_SIZE(
+            ((heap->more_cap + 10) * sizeof(*heap->more)), page_size);
         void   *tmp = mmap(NULL, tmp_size,
                            PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_PRIVATE,
                            -1, 0);

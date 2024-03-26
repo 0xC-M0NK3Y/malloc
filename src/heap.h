@@ -76,6 +76,7 @@ static inline void heap_free(heap_t *heap, void *ptr, size_t zone_size, int page
                         memmove(&heap->more[i], &heap->more[i+1], heap->more_nb-i-1);
                         if (heap->more_index != (size_t)-1 && heap->more_index > i)
                             heap->more_index--;
+                        heap->more_nb--;
                     }
                 // sinon si le free_space est dans le block actuel, on prefere prendre un free_space a gauche
                 } else if (heap->more_index == i) {
